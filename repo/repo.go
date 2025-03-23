@@ -97,3 +97,35 @@ func NewRepository(path string, force bool) (*Repository, error) {
 
 	return repo, nil
 }
+
+func FindRepository(path string, required bool) (*Repository, error) {
+	abspath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+
+	gitpath := filepath.Join(abspath, ".git")
+	info, err := os.Stat(gitpath)
+	if err != nil {
+		return nil, err
+	}
+
+	if info.Mode().IsDir() {
+		return NewRepository(path, false)
+	}
+
+	parent, err := filepath.Abs(filepath.Join(path, ".."))
+	if err != nil {
+		return nil, err
+	}
+
+	if parent == path {
+		var err error
+		if required {
+			err = fmt.Errorf("no git directory")
+		}
+		return nil, err
+	}
+
+	return FindRepository(parent, required)
+}
