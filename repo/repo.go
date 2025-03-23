@@ -14,7 +14,7 @@ type Config struct {
 		FormatVersion int  `toml:"repositoryformatversion"`
 		FileMode      bool `toml:"filemode"`
 		Bare          bool `toml:"bare"`
-	}
+	} `toml:"core"`
 }
 
 func defaultConfig() *Config {
