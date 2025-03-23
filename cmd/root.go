@@ -8,9 +8,11 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "go-git",
-	Short: "a very bad attempt at git",
-	Long:  "a very very bad attempt at implementing git from scratch",
+	Use:           "go-git",
+	Short:         "a very bad attempt at git",
+	Long:          "a very very bad attempt at implementing git from scratch",
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
 func Execute() {
