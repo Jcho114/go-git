@@ -1,5 +1,7 @@
 # Practice Project Git In Go
 
+Git. In Golang. To Learn.
+
 ## Gist
 
 This is a side project for my own learning. I plan to add most core features, mostly
