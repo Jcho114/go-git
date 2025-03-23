@@ -82,7 +82,16 @@ func ObjectWrite(repository *repo.Repository, object Object) (string, error) {
 
 	if repository != nil {
 		objectfilepath := filepath.Join(repository.Gitdir, "objects", string(sha[:2]), string(sha[2:]))
-		err := os.WriteFile(objectfilepath, sha, 0644)
+
+		var buffer bytes.Buffer
+		writer := zlib.NewWriter(&buffer)
+		_, err := writer.Write(sha)
+		if err != nil {
+			return "", err
+		}
+		writer.Close()
+
+		err = os.WriteFile(objectfilepath, buffer.Bytes(), 0644)
 		if err != nil {
 			return "", err
 		}
