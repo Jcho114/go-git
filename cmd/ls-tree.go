@@ -20,7 +20,7 @@ var lsTreeCmd = &cobra.Command{
 	Use:   "ls-tree",
 	Short: "a very attempt at printing tree contents",
 	Long:  "a very very bad attempt at printing tree contents from scratch",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	RunE:  runLsTree,
 }
 
