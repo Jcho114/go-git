@@ -6,15 +6,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pelletier/go-toml/v2"
+	"gopkg.in/ini.v1"
 )
 
 type Config struct {
 	Core struct {
-		FormatVersion int  `toml:"repositoryformatversion"`
-		FileMode      bool `toml:"filemode"`
-		Bare          bool `toml:"bare"`
-	} `toml:"core"`
+		FormatVersion int  `ini:"repositoryformatversion"`
+		FileMode      bool `ini:"filemode"`
+		Bare          bool `ini:"bare"`
+	} `ini:"core"`
 }
 
 func defaultConfig() *Config {
@@ -27,12 +27,8 @@ func defaultConfig() *Config {
 }
 
 func parseConfig(filepath string) (*Config, error) {
-	content, err := os.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
 	var cfg Config
-	err = toml.Unmarshal(content, &cfg)
+	err := ini.MapTo(&cfg, filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -40,12 +36,14 @@ func parseConfig(filepath string) (*Config, error) {
 }
 
 func (c *Config) Write(filepath string) error {
-	bytes, err := toml.Marshal(c)
+	inicfg := ini.Empty()
+
+	err := ini.ReflectFrom(inicfg, c)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(filepath, bytes, 0644)
+	err = inicfg.SaveTo(filepath)
 	if err != nil {
 		return err
 	}

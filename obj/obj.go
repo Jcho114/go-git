@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"crypto/sha1"
+
 	"github.com/Jcho114/go-git/repo"
 )
 
@@ -54,8 +55,8 @@ func ObjectRead(repository *repo.Repository, sha string) (Object, error) {
 	wsindex := bytes.Index(buffer.Bytes(), []byte(" "))
 	format := buffer.Bytes()[:wsindex]
 
-	nulindex := bytes.Index(buffer.Bytes(), []byte("\x00"))
-	size, err := strconv.Atoi(string(buffer.Bytes()[:nulindex]))
+	nulindex := wsindex + bytes.Index(buffer.Bytes()[wsindex:], []byte("\x00"))
+	size, err := strconv.Atoi(string(buffer.Bytes()[wsindex+1 : nulindex]))
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +113,11 @@ type Commit struct {
 
 func NewCommit(buffer []byte) *Commit {
 	kvlm := kvlmap{}
-	return &Commit{Kvlm: kvlm}
+	commit := &Commit{Kvlm: kvlm}
+	if buffer != nil {
+		commit.Deserialize(string(buffer))
+	}
+	return commit
 }
 
 func (c *Commit) Serialize(repository *repo.Repository) string {
@@ -149,8 +154,8 @@ func (t *Tag) Type() string {
 func parseKVLM(content []byte, dct kvlmap) kvlmap {
 	start := 0
 	for {
-		spaceindex := bytes.Index(content[start:], []byte(" "))
-		newlineindex := bytes.Index(content[start:], []byte("\n"))
+		spaceindex := bytes.IndexByte(content[start:], ' ') + start
+		newlineindex := bytes.IndexByte(content[start:], '\n') + start
 
 		if spaceindex == -1 || newlineindex < spaceindex {
 			message := string(content[start+1:])
@@ -161,7 +166,7 @@ func parseKVLM(content []byte, dct kvlmap) kvlmap {
 		key := string(content[start:spaceindex])
 		end := start
 		for {
-			end = bytes.Index([]byte(content[end+1:]), []byte("\n"))
+			end = bytes.IndexByte(content[end+1:], '\n') + end + 1
 			if content[end+1] != ' ' {
 				break
 			}
@@ -173,6 +178,8 @@ func parseKVLM(content []byte, dct kvlmap) kvlmap {
 			dct[key] = []string{}
 		}
 		dct[key] = append(dct[key], value)
+
+		start = end + 1
 	}
 
 	return dct
@@ -219,7 +226,11 @@ type Blob struct {
 }
 
 func NewBlob(buffer []byte) *Blob {
-	return &Blob{}
+	blob := &Blob{}
+	if buffer != nil {
+		blob.Deserialize(string(buffer))
+	}
+	return blob
 }
 
 func (b *Blob) Serialize(repository *repo.Repository) string {
