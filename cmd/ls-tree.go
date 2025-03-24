@@ -39,7 +39,10 @@ func runLsTree(cmd *cobra.Command, args []string) error {
 }
 
 func lsTree(repository *repo.Repository, ref string, recursive bool, prefix string) error {
-	objname := obj.ObjectFind(repository, ref, "tree", true)
+	objname, err := obj.ObjectFind(repository, ref, "tree", true)
+	if err != nil {
+		return err
+	}
 	object, err := obj.ObjectRead(repository, objname)
 	if err != nil {
 		return err

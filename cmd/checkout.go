@@ -36,7 +36,10 @@ func runCheckout(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	commitname := obj.ObjectFind(repository, commit, "commit", true)
+	commitname, err := obj.ObjectFind(repository, commit, "commit", true)
+	if err != nil {
+		return err
+	}
 	object, err := obj.ObjectRead(repository, commitname)
 	if err != nil {
 		return err

@@ -3,14 +3,18 @@ package obj
 import (
 	"bytes"
 	"compress/zlib"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"crypto/sha1"
 
+	"github.com/Jcho114/go-git/ref"
 	"github.com/Jcho114/go-git/repo"
 )
 
@@ -20,8 +24,113 @@ type Object interface {
 	Type() string
 }
 
-func ObjectFind(repository *repo.Repository, name string, format string, follow bool) string {
-	return name
+var hashRegex = regexp.MustCompile("^[0-9A-Fa-f]{4,40}$")
+
+func ObjectFind(repository *repo.Repository, name string, format string, follow bool) (string, error) {
+	objnames, err := objectResolve(repository, name)
+	if err != nil {
+		return "", err
+	}
+
+	if len(objnames) == 0 || len(objnames) > 1 {
+		return "", fmt.Errorf("%s is an ambiguous reference", name)
+	}
+
+	objname := objnames[0]
+
+	if format == "any" {
+		return objname, nil
+	}
+
+	for {
+		object, err := ObjectRead(repository, objname)
+		if err != nil {
+			return "", nil
+		}
+
+		switch format {
+		case "blob":
+			if _, ok := object.(*Blob); ok {
+				return objname, nil
+			}
+		case "commit":
+			commit, ok := object.(*Commit)
+			if ok {
+				return objname, nil
+			}
+			objname = commit.Kvlm["tree"][0]
+		case "tag":
+			tag, ok := object.(*Tag)
+			if ok {
+				return objname, nil
+			}
+			objname = tag.Kvlm["object"][0]
+		case "tree":
+			if _, ok := object.(*Tree); ok {
+				return objname, nil
+			}
+		}
+
+		if format != "commit" && format != "tag" {
+			return "", fmt.Errorf("unable to find object %s", name)
+		}
+	}
+}
+
+func objectResolve(repository *repo.Repository, name string) ([]string, error) {
+	candidates := []string{}
+
+	if strings.TrimSpace(name) == "" {
+		err := fmt.Errorf("unable to resolve an empty name")
+		return nil, err
+	}
+
+	if name == "HEAD" {
+		objname, err := ref.RefResolve(repository, "HEAD")
+		if err != nil {
+			return nil, err
+		}
+		return []string{objname}, nil
+	}
+
+	if hashRegex.MatchString(name) {
+		prefix := name[:2]
+		path := filepath.Join(repository.Gitdir, "objects", prefix)
+		info, err := os.Stat(path)
+		pathexists := !errors.Is(err, os.ErrNotExist)
+		if pathexists && info.Mode().IsDir() {
+			rem := prefix[2:]
+			files, err := os.ReadDir(path)
+			if err != nil {
+				return nil, err
+			}
+			for _, file := range files {
+				if strings.HasPrefix(file.Name(), rem) {
+					candidates = append(candidates, file.Name())
+				}
+			}
+		}
+	}
+
+	tagname, err := ref.RefResolve(repository, "refs/tags/"+name)
+	pathexists := errors.Is(err, os.ErrNotExist)
+	if pathexists {
+		return nil, err
+	}
+	if err == nil {
+		candidates = append(candidates, tagname)
+	}
+
+	branchname, err := ref.RefResolve(repository, "refs/heads/"+name)
+	pathexists = errors.Is(err, os.ErrNotExist)
+	if pathexists {
+		return nil, err
+	}
+	if err == nil {
+		candidates = append(candidates, branchname)
+	}
+
+	return candidates, nil
 }
 
 func ObjectRead(repository *repo.Repository, sha string) (Object, error) {

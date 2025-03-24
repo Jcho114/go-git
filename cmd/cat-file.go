@@ -45,7 +45,10 @@ func runCatFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	objname = obj.ObjectFind(repository, objname, objtype, true)
+	objname, err = obj.ObjectFind(repository, objname, objtype, true)
+	if err != nil {
+		return err
+	}
 	object, err := obj.ObjectRead(repository, objname)
 	if err != nil {
 		return err

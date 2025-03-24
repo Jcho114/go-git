@@ -34,7 +34,10 @@ func runLog(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	objname := obj.ObjectFind(repository, commit, "commit", true)
+	objname, err := obj.ObjectFind(repository, commit, "commit", true)
+	if err != nil {
+		return err
+	}
 	seen := make(map[string]bool)
 	fmt.Println("digraph log{")
 	fmt.Println("  node[shape=rect]")

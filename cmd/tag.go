@@ -62,7 +62,10 @@ func runTag(cmd *cobra.Command, args []string) error {
 }
 
 func tagCreate(repository *repo.Repository, tagname string, ref string, asobject bool) error {
-	sha := obj.ObjectFind(repository, ref, "any", true)
+	sha, err := obj.ObjectFind(repository, ref, "any", true)
+	if err != nil {
+		return err
+	}
 
 	if asobject {
 		tag := obj.NewTag(nil)
