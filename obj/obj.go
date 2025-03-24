@@ -3,6 +3,7 @@ package obj
 import (
 	"bytes"
 	"compress/zlib"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -218,7 +219,7 @@ func (l *treeLeaf) Key() string {
 
 func parseTreeOne(content string, start int) (int, *treeLeaf) {
 	spaceindex := strings.Index(content[start:], " ") + start
-	mode := content[:spaceindex]
+	mode := content[start:spaceindex]
 	if len(mode) == 5 {
 		mode = "0" + mode
 	}
@@ -226,7 +227,8 @@ func parseTreeOne(content string, start int) (int, *treeLeaf) {
 	nullindex := strings.Index(content[spaceindex:], "\x00") + spaceindex
 	path := content[spaceindex+1 : nullindex]
 
-	sha := content[nullindex+1 : nullindex+21]
+	binarysha := content[nullindex+1 : nullindex+21]
+	sha := hex.EncodeToString([]byte(binarysha))
 
 	leaf := &treeLeaf{
 		Mode: mode,
