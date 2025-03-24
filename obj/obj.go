@@ -54,25 +54,35 @@ func ObjectFind(repository *repo.Repository, name string, format string, follow 
 				return objname, nil
 			}
 		case "commit":
-			commit, ok := object.(*Commit)
+			_, ok := object.(*Commit)
 			if ok {
 				return objname, nil
 			}
-			objname = commit.Kvlm["tree"][0]
 		case "tag":
-			tag, ok := object.(*Tag)
+			_, ok := object.(*Tag)
 			if ok {
 				return objname, nil
 			}
-			objname = tag.Kvlm["object"][0]
 		case "tree":
 			if _, ok := object.(*Tree); ok {
 				return objname, nil
 			}
 		}
 
-		if format != "commit" && format != "tag" {
-			return "", fmt.Errorf("unable to find object %s", name)
+		if commit, ok := object.(*Commit); ok {
+			value, ok := commit.Kvlm["tree"]
+			if !ok || len(value) == 0 {
+				return "", fmt.Errorf("commit does not have tree field in it")
+			}
+			objname = commit.Kvlm["tree"][0]
+		} else if tag, ok := object.(*Tag); ok {
+			value, ok := tag.Kvlm["object"]
+			if !ok || len(value) == 0 {
+				return "", fmt.Errorf("tag does not have object field in it")
+			}
+			objname = tag.Kvlm["object"][0]
+		} else {
+			return "", fmt.Errorf("unable to find object %s with type %s", name, format)
 		}
 	}
 }
