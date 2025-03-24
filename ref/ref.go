@@ -10,7 +10,10 @@ import (
 )
 
 func RefResolve(repository *repo.Repository, ref string) (string, error) {
-	path := filepath.Join(repository.Gitdir, ref)
+	path := ref
+	if !strings.HasPrefix(ref, ".git") {
+		path = filepath.Join(repository.Gitdir, ref)
+	}
 
 	info, err := os.Stat(path)
 	if err != nil {
@@ -26,6 +29,7 @@ func RefResolve(repository *repo.Repository, ref string) (string, error) {
 		return "", nil
 	}
 	content := string(bytescontent)
+	content = content[:len(content)-1]
 
 	if strings.HasPrefix(content, "ref: ") {
 		content, err := RefResolve(repository, content[5:])
