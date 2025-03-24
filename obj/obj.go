@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"crypto/sha1"
 	"github.com/Jcho114/go-git/repo"
@@ -100,42 +101,27 @@ func ObjectWrite(repository *repo.Repository, object Object) (string, error) {
 	return string(sha), nil
 }
 
+type kvlmap = map[string][]string
+
 type Commit struct {
+	Kvlm kvlmap
 }
 
 func NewCommit(buffer []byte) *Commit {
-	return &Commit{}
+	kvlm := kvlmap{}
+	return &Commit{Kvlm: kvlm}
 }
 
 func (c *Commit) Serialize(repository *repo.Repository) string {
-	return ""
+	return serializeKVLM(c.Kvlm)
 }
 
 func (c *Commit) Deserialize(content string) {
-
+	c.Kvlm = parseKVLM([]byte(content), kvlmap{})
 }
 
 func (c *Commit) Type() string {
 	return "commit"
-}
-
-type Tree struct {
-}
-
-func NewTree(buffer []byte) *Tree {
-	return &Tree{}
-}
-
-func (t *Tree) Serialize(repository *repo.Repository) string {
-	return ""
-}
-
-func (t *Tree) Deserialize(content string) {
-
-}
-
-func (t *Tree) Type() string {
-	return "tree"
 }
 
 type Tag struct {
@@ -155,6 +141,74 @@ func (t *Tag) Deserialize(content string) {
 
 func (t *Tag) Type() string {
 	return "tag"
+}
+
+func parseKVLM(content []byte, dct kvlmap) kvlmap {
+	start := 0
+	for {
+		spaceindex := bytes.Index(content[start:], []byte(" "))
+		newlineindex := bytes.Index(content[start:], []byte("\n"))
+
+		if spaceindex == -1 || newlineindex < spaceindex {
+			message := string(content[start+1:])
+			dct[""] = []string{message}
+			break
+		}
+
+		key := string(content[start:spaceindex])
+		end := start
+		for {
+			end = bytes.Index([]byte(content[end+1:]), []byte("\n"))
+			if content[end+1] != ' ' {
+				break
+			}
+		}
+		value := string(content[spaceindex+1 : end])
+		value = strings.ReplaceAll(value, "\n ", "\n")
+
+		if _, ok := dct[key]; !ok {
+			dct[key] = []string{}
+		}
+		dct[key] = append(dct[key], value)
+	}
+
+	return dct
+}
+
+func serializeKVLM(kvlm kvlmap) string {
+	res := ""
+
+	for key := range kvlm {
+		if key == "" {
+			continue
+		}
+
+		values := kvlm[key]
+		for _, value := range values {
+			res += key + " " + strings.ReplaceAll(value, "\n", "\n ") + "\n"
+		}
+	}
+
+	return res
+}
+
+type Tree struct {
+}
+
+func NewTree(buffer []byte) *Tree {
+	return &Tree{}
+}
+
+func (t *Tree) Serialize(repository *repo.Repository) string {
+	return ""
+}
+
+func (t *Tree) Deserialize(content string) {
+
+}
+
+func (t *Tree) Type() string {
+	return "tree"
 }
 
 type Blob struct {
