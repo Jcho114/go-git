@@ -38,14 +38,14 @@ func RefResolve(repository *repo.Repository, ref string) (string, error) {
 	return content, nil
 }
 
-type refMap = map[string]interface{}
+type RefMap = map[string]interface{}
 
-func RefList(repository *repo.Repository, path string) (refMap, error) {
+func RefList(repository *repo.Repository, path string) (RefMap, error) {
 	if path == "" {
 		path = filepath.Join(repository.Gitdir, "refs")
 	}
 
-	res := make(refMap)
+	res := make(RefMap)
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
