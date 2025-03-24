@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -202,19 +203,78 @@ func serializeKVLM(kvlm kvlmap) string {
 	return res
 }
 
+type treeLeaf struct {
+	mode string
+	path string
+	sha  string
+}
+
+func (l *treeLeaf) Key() string {
+	if strings.HasPrefix(l.mode, "10") {
+		return l.path
+	}
+	return l.path + "/"
+}
+
+func parseTreeOne(content string, start int) (int, *treeLeaf) {
+	spaceindex := strings.Index(content[start:], " ") + start
+	mode := content[:spaceindex]
+	if len(mode) == 5 {
+		mode = "0" + mode
+	}
+
+	nullindex := strings.Index(content[spaceindex:], "\x00") + spaceindex
+	path := content[spaceindex+1 : nullindex]
+
+	sha := content[nullindex+1 : nullindex+21]
+
+	leaf := &treeLeaf{
+		mode: mode,
+		path: path,
+		sha:  sha,
+	}
+	return nullindex + 21, leaf
+}
+
+func parseTree(content string) []*treeLeaf {
+	curr := 0
+	res := []*treeLeaf{}
+
+	for curr < len(content) {
+		var leaf *treeLeaf
+		curr, leaf = parseTreeOne(content, curr)
+		res = append(res, leaf)
+	}
+
+	return res
+}
+
 type Tree struct {
+	items []*treeLeaf
 }
 
 func NewTree(buffer []byte) *Tree {
-	return &Tree{}
+	tree := &Tree{}
+	if buffer != nil {
+		tree.Deserialize(string(buffer))
+	}
+	return tree
 }
 
 func (t *Tree) Serialize(repository *repo.Repository) string {
-	return ""
+	sort.SliceStable(t.items, func(i, j int) bool {
+		return t.items[i].Key() < t.items[j].Key()
+	})
+
+	res := ""
+	for _, item := range t.items {
+		res += item.mode + " " + item.path + "\x00" + item.sha
+	}
+	return res
 }
 
 func (t *Tree) Deserialize(content string) {
-
+	t.items = parseTree(content)
 }
 
 func (t *Tree) Type() string {
