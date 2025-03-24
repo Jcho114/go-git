@@ -41,6 +41,9 @@ func ObjectRead(repository *repo.Repository, sha string) (Object, error) {
 	}
 	buffer := bytes.NewBuffer(file)
 	reader, err := zlib.NewReader(buffer)
+	if err != nil {
+		return nil, err
+	}
 	defer reader.Close()
 
 	_, err = io.Copy(buffer, reader)
