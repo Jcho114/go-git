@@ -284,7 +284,7 @@ func (t *Tree) Type() string {
 }
 
 type Blob struct {
-	data []byte
+	Data []byte
 }
 
 func NewBlob(buffer []byte) *Blob {
@@ -296,11 +296,11 @@ func NewBlob(buffer []byte) *Blob {
 }
 
 func (b *Blob) Serialize(repository *repo.Repository) string {
-	return string(b.data)
+	return string(b.Data)
 }
 
 func (b *Blob) Deserialize(content string) {
-	b.data = []byte(content)
+	b.Data = []byte(content)
 }
 
 func (b *Blob) Type() string {
