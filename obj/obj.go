@@ -134,23 +134,15 @@ func (c *Commit) Type() string {
 	return "commit"
 }
 
-type Tag struct {
-}
+type Tag = Commit
 
 func NewTag(buffer []byte) *Tag {
-	return &Tag{}
-}
-
-func (t *Tag) Serialize(repository *repo.Repository) string {
-	return ""
-}
-
-func (t *Tag) Deserialize(content string) {
-
-}
-
-func (t *Tag) Type() string {
-	return "tag"
+	kvlm := kvlmap{}
+	tag := &Commit{Kvlm: kvlm}
+	if buffer != nil {
+		tag.Deserialize(string(buffer))
+	}
+	return tag
 }
 
 func parseKVLM(content []byte, dct kvlmap) kvlmap {
