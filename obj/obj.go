@@ -250,7 +250,7 @@ func parseTree(content string) []*treeLeaf {
 }
 
 type Tree struct {
-	items []*treeLeaf
+	Items []*treeLeaf
 }
 
 func NewTree(buffer []byte) *Tree {
@@ -262,19 +262,19 @@ func NewTree(buffer []byte) *Tree {
 }
 
 func (t *Tree) Serialize(repository *repo.Repository) string {
-	sort.SliceStable(t.items, func(i, j int) bool {
-		return t.items[i].Key() < t.items[j].Key()
+	sort.SliceStable(t.Items, func(i, j int) bool {
+		return t.Items[i].Key() < t.Items[j].Key()
 	})
 
 	res := ""
-	for _, item := range t.items {
+	for _, item := range t.Items {
 		res += item.mode + " " + item.path + "\x00" + item.sha
 	}
 	return res
 }
 
 func (t *Tree) Deserialize(content string) {
-	t.items = parseTree(content)
+	t.Items = parseTree(content)
 }
 
 func (t *Tree) Type() string {
