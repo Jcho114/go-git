@@ -1,6 +1,7 @@
 package ref
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -85,4 +86,28 @@ func RefList(repository *repo.Repository, path string) (RefMap, error) {
 	}
 
 	return res, nil
+}
+
+func RefShow(refmap RefMap, prefix string, showhash bool) error {
+	if prefix != "" {
+		prefix += "/"
+	}
+	for key, value := range refmap {
+		switch value := value.(type) {
+		case RefMap:
+			err := RefShow(value, prefix+key, showhash)
+			if err != nil {
+				return err
+			}
+		case string:
+			if showhash {
+				fmt.Printf("%s %s%s\n", value, prefix, key)
+			} else {
+				fmt.Printf("%s%s\n", prefix, key)
+			}
+		default:
+			return fmt.Errorf("refmap value is neither a refmap or a string")
+		}
+	}
+	return nil
 }
