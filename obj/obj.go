@@ -204,16 +204,16 @@ func serializeKVLM(kvlm kvlmap) string {
 }
 
 type treeLeaf struct {
-	mode string
-	path string
-	sha  string
+	Mode string
+	Path string
+	Sha  string
 }
 
 func (l *treeLeaf) Key() string {
-	if strings.HasPrefix(l.mode, "10") {
-		return l.path
+	if strings.HasPrefix(l.Mode, "10") {
+		return l.Path
 	}
-	return l.path + "/"
+	return l.Path + "/"
 }
 
 func parseTreeOne(content string, start int) (int, *treeLeaf) {
@@ -229,9 +229,9 @@ func parseTreeOne(content string, start int) (int, *treeLeaf) {
 	sha := content[nullindex+1 : nullindex+21]
 
 	leaf := &treeLeaf{
-		mode: mode,
-		path: path,
-		sha:  sha,
+		Mode: mode,
+		Path: path,
+		Sha:  sha,
 	}
 	return nullindex + 21, leaf
 }
@@ -268,7 +268,7 @@ func (t *Tree) Serialize(repository *repo.Repository) string {
 
 	res := ""
 	for _, item := range t.Items {
-		res += item.mode + " " + item.path + "\x00" + item.sha
+		res += item.Mode + " " + item.Path + "\x00" + item.Sha
 	}
 	return res
 }
