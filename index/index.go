@@ -3,6 +3,7 @@ package index
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
@@ -104,8 +105,8 @@ func IndexRead(repository *repo.Repository) (*Index, error) {
 
 		fsize := int(binary.BigEndian.Uint32(content[curr+36 : curr+40]))
 
-		sharaw := int(binary.BigEndian.Uint32(content[curr+40 : curr+44]))
-		sha := fmt.Sprintf("%04x", sharaw)
+		sharaw := hex.EncodeToString(content[curr+40 : curr+60])
+		sha := string(sharaw)
 
 		flags := int(binary.BigEndian.Uint16(content[curr+60 : curr+62]))
 		flagvalid := (flags & 0b1000000000000000) != 0
